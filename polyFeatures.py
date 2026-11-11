@@ -16,7 +16,9 @@ featureNames = [
     "price6hAgo",
     "price12hAgo",
     "price24hAgo",
+    "change3h",          # priceNow - price3hAgo
     "change6h",          # priceNow - price6hAgo
+    "change12h",         # priceNow - price12hAgo
     "change24h",         # priceNow - price24hAgo
     "volatility24h",     # how jumpy the price was over the last 24 hours
     "logVolume",         # log of dollars traded, so huge markets don't drown out everything else
@@ -66,27 +68,51 @@ def pricesBetweenStartEnd(times, prices, startTime, endTime):
 
 def getMarketFeatures(marketRecord):
 
+    priceDifference = []
+
     marketTimes = marketRecord["times"]
     marketPriceList = marketRecord["prices"]
     predictionTime = marketRecord["start"] - hourseBeforeGame * hourSeconds
 
-    # Need to return None if marketTimes is empty or marketTimes[0] is after predictionTime
+    if len(marketTimes) == 0:
+        return None
 
-    # Need to get priceNow with priceAt(marketTimes, marketPriceList, predictionTime)
+    if marketTimes[0] > predictionTime:
+        return None
 
-    # Need to get the older prices the same way, for example price6hAgo = priceAt(marketTimes, marketPriceList, predictionTime - 6 * hourSeconds)
+    priceNow = priceAt(marketTimes, marketPriceList, predictionTime)
 
-    # Need to get the changes, for example change6h = priceNow - price6hAgo
+    price3hAgo = priceAt(marketTimes, marketPriceList, predictionTime - 3 * hourSeconds)
+    price6hAgo = priceAt(marketTimes, marketPriceList, predictionTime - 6 * hourSeconds)
+    price12hAgo = priceAt(marketTimes, marketPriceList, predictionTime - 12 * hourSeconds)
+    price24hAgo = priceAt(marketTimes, marketPriceList, predictionTime - 24 * hourSeconds)
 
-    # Need to get volatility24h: take pricesBetweenStartEnd(marketTimes, marketPriceList, predictionTime - 24 * hourSeconds, predictionTime), find the difference between each price and the next one, then use np.std on the differences
+    
+    change3hour = priceNow - price3hAgo
+    change6hour = priceNow - price6hAgo
+    change12hour = priceNow - price12hAgo
+    change24hour = priceNow - price24hAgo
 
-    # Need to get logVolume with math.log1p(marketRecord["volume"])
+    lastDayPrice = pricesBetweenStartEnd(marketTimes, marketPriceList, predictionTime - 24 * hourSeconds, predictionTime)
 
-    # Need to get hoursListed with (predictionTime - marketTimes[0]) / hourSeconds
+    for i in range(len(lastDayPrice) - 1):
 
-    # Need to return numbers as a list
+        priceDifference.append(lastDayPrice[i + 1] - lastDayPrice[i])
 
-    return None
+    if len(priceDifference) < 2:
+
+        volatility24Hours = 0.0
+
+    else:
+
+        volatility24Hours = float(np.std(priceDifference))
+
+    logVolume = math.log1p(marketRecord["volume"])
+
+    hoursListed = (predictionTime - marketTimes[0]) / hourSeconds
+    
+    return  [priceNow, price3hAgo, price6hAgo, price12hAgo, price24hAgo, change3hour, change6hour, change12hour, change24hour, volatility24Hours, logVolume, hoursListed]
+
 
 # Returns X (One row of numbers per market), Y (1 or 0 for who won), game start times, and market prices
 
