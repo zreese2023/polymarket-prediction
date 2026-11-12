@@ -1,0 +1,19 @@
+Decision Trees - https://scikit-learn.org/stable/modules/tree.html
+
+Polymarket Data -https://github.com/otrofimo/polymarket_data
+		 https://gamma-api.polymarket.com/sports 
+		 https://docs.polymarket.com/api-reference/markets/get-a-tokens-price-history.md
+
+How Polymarket Works - https://docs.polymarket.com/polymarket-101
+		       https://help.polymarket.com/en/articles/13364488-how-are-prices-calculated
+
+Data Cleaning - https://community.databricks.com/t5/technical-blog/data-cleaning-for-machine-learning/ba-p/95410
+
+BrierScore - http://en.wikipedia.org/wiki/Glenn_W._Brier
+	     https://en.wikipedia.org/wiki/Brier_score
+
+Machine Learning - https://en.wikipedia.org/wiki/Leakage_(machine_learning)
+
+JSON - https://requests.readthedocs.io/en/latest/user/quickstart/
+       https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Status/429
+
