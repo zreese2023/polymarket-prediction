@@ -19,9 +19,13 @@ class Node:
 
 def groupImpurity(groupOutcomes):
 
-    # Need to calculate the gini
+    # Calculate the gini
 
-    return 0.0
+    if len(groupOutcomes) == 0:
+        return 0.0
+
+    winRate = float(np.mean(groupOutcomes))
+    return 2.0 * winRate * (1.0 - winRate)
     
 class DecisionTree:
 
@@ -44,7 +48,26 @@ class DecisionTree:
 
         # Need to make a node, stop if it should be a leaf or split and grow left and right
 
-        return None
+        node = Node(float(np.mean(Y)), len(Y))
+
+        # stop growing if too pure, too deep, or too few samples
+        if currentDepth >= self.maxDepth or len(Y) < 2 * self.minSamplesLeaf or groupImpurity(Y) == 0.0:
+            return node
+
+        bestFeature, bestThreshold = self.findBestSplit(X, Y) # find the best feature and threshold to split on
+
+        if bestFeature is None:
+            return node
+
+        leftMask = X[:, bestFeature] <= bestThreshold # mask for left branch
+
+        # set the split and grow the branches
+        node.featureIndex = bestFeature
+        node.threshold = bestThreshold
+        node.left = self.growTree(X[leftMask], Y[leftMask], currentDepth + 1)
+        node.right = self.growTree(X[~leftMask], Y[~leftMask], currentDepth + 1)
+
+        return node
 
     def findBestSplit(self, X, Y):
 
@@ -53,6 +76,36 @@ class DecisionTree:
         bestScore = groupImpurity(Y)
 
         # Need to try every feature and threshhold, keep the best
+
+        count = len(Y)
+        wins = float(np.sum(Y))
+
+        for featureIndex in range(X.shape[1]):
+            # sort by feature value
+            order = np.argsort(X[:, featureIndex], kind="stable")
+            values = X[order, featureIndex]
+            outcomes = Y[order]
+
+            leftWins = np.cumsum(outcomes) # cumulative wins in left group
+
+            for i in range(self.minSamplesLeaf - 1, count - self.minSamplesLeaf):
+                if values[i] == values[i + 1]:
+                    continue
+
+                lc = i + 1 # samples in left group
+                rc = count - lc # samples in right group
+                lr = leftWins[i] / lc # win rate in left group
+                rr = (wins - leftWins[i]) / rc # win rate in right group
+
+                leftGini = 2.0 * lr * (1.0 - lr)
+                rightGini = 2.0 * rr * (1.0 - rr)
+
+                score = (lc * leftGini + rc * rightGini) / count
+
+                if score < bestScore:
+                    bestScore = score
+                    bestFeature = featureIndex
+                    bestThreshold = (values[i] + values[i + 1]) / 2.0
 
         return bestFeature, bestThreshold
 
@@ -63,5 +116,17 @@ class DecisionTree:
         allChances = []
 
         # Need to loop over ever row in X, walk each row down the trea to a leaf and return the winChance
+        for row in X:
+            node = self.root
+            while not node.isLeaf():
+                if row[node.featureIndex] <= node.threshold:
+                    node = node.left
+                else:
+                    node = node.right
+            allChances.append(node.winChance)
 
         return np.array(allChances)
+
+    def predict(self, X):
+        # convert predicted probabilities to binary class labels
+        return (self.predictProbability(X) >= 0.5).astype(int)
