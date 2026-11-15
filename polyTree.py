@@ -75,7 +75,7 @@ class DecisionTree:
         bestThreshold = None
         bestScore = groupImpurity(Y)
 
-        # Need to try every feature and threshhold, keep the best
+        # Need to try every feature and threshold, keep the best
 
         count = len(Y)
         wins = float(np.sum(Y))

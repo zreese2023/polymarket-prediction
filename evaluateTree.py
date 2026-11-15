@@ -13,23 +13,43 @@ def timeSplit(X, Y, startTimes, testFraction = 0.2):
 
     return X[trainRows], X[testRows], Y[trainRows], Y[testRows], testRows
 
+# testY: array of actual game outcome 
+# winChances: array of predicted chance for each of those games
 def getAccuracy(testY, winChances):
 
-    # Need to count how many games were predicted right and divide by the number of games
+    # Count how many games were predicted right and divide by the number of games
+    gameNum = len(testY)
 
-    return 0.0
+    correctNum = 0
+    for i in range(gameNum):
+        # prediction is considered correct if greater than 50%
+        if testY[i] == 1 and winChances[i] > 0.5:
+            correctNum += 1 # increment counter of how many game were right
+
+    return float(correctNum/gameNum)
 
 def getBrierScore(testY, winChances):
 
-    # Need to calculate the brier score
+    # Calculate the brier score
 
-    return 0.0
+    numInstances = len(testY)
 
-# Grooups predictions into bins
+    sum = 0
+    for i in range(numInstances):
+        addend = float(winChances[i] - testY[i]) ** 2
+        sum += addend
+
+    brScore = (1/numInstances) * (sum)
+
+    return brScore
+
+# Groups predictions into bins
 
 def getCalibration(testY, winChances, binCount = 10):
 
     # Need to return a list of (average predicted chance, actual win rate, number of games) for each bin that has games
+
+    # bins group games by their predicted chance
 
     return []
 
