@@ -49,11 +49,20 @@ def getOutcome(polyMarket):
 
     getOutcome = parsePolyList(polyMarket.get("outcomePrices"))
 
-    # Need to return none if there are not exactly two prices
+    if len(getOutcome) != 2:
 
-    # Need to turn the price into floats, winner's price should be 1, loser should be 0
+        return None
 
-    # Need to return None if neither price is above 0.99, which means the market was voided
+    firstPrice = float(getOutcome[0])
+    secondPrice = float(getOutcome[1])
+
+    if firstPrice > 0.99:
+
+        return 1
+
+    if secondPrice > 0.99:
+
+        return 0
     
     return None
 
@@ -63,17 +72,27 @@ def isGameWinner(polyMarket):
 
     marketType = polyMarket.get("sportsMarketType")
 
-    # Need to check which value of sportsMarketType means game winner on a few real market types
+    marketOutcomes = parsePolyList(polyMarket.get("outcomes"))
 
-    return False
+    if marketType != "moneyline":
+        return False
+
+    if len(marketOutcomes) != 2 or marketOutcomes == ["Yes", "No"]:
+        return False
+
+    return True
 
 # Returns the time the game started in unix seconds, None if there is missing data
 
 def getGameStart(polyMarket):
 
-    # Still need to use toUnixSeconds on polyMarket.get("gameStartTime"), it can be null, return none if missing
+    gameStart = toUnixSeconds(polyMarket.get("gameStartTime"))
 
-    return None
+    if gameStart is not None:
+
+        return gameStart
+
+    return toUnixSeconds(polyMarket.get("endDate"))
 
 # Cleaning all the markets for one sport
 
@@ -84,11 +103,28 @@ def cleanMarkets(rawMarkets, currSport, seenIds):
 
     for i in rawMarkets:
 
-        # Need to skip markets whose id is already in seenIds, one market can have several tags, then add the id to seenIds
+        if i.get("id") in seenIds:
 
-        # Need to skip markets where isGameWinner is false
+            droppedCount += 1
+            continue
 
-        # Need to skip markets where getOutcome or getGameStart is None
+        seenIds.add(i.get("id"))
+
+        # skip markets where isGameWinner is false
+
+        if not isGameWinner(i):
+            droppedCount += 1
+            continue
+
+        # skip markets where getOutcome or getGameStart is None
+
+        marketOutcome = getOutcome(i)
+        gameStart = getGameStart(i)
+
+        if marketOutcome is None or gameStart is None:
+            
+            droppedCount += 1
+            continue
 
         # Need to skip markets with volume under minVolume, use i.get("volumeNum")
 
