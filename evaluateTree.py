@@ -16,9 +16,15 @@ def timeSplit(X, Y, startTimes, testFraction = 0.2):
 # testY: array of actual game outcome 
 # winChances: array of predicted chance for each of those games
 def getAccuracy(testY, winChances):
-
+    
     # Count how many games were predicted right and divide by the number of games
+    
+    if winChances is None or testY is None:
+        return None
+    
     gameNum = len(testY) # expects/assumes list type
+    if gameNum < 1:
+        return 0
 
     correctNum = 0
     for i in range(gameNum):
@@ -33,7 +39,7 @@ def getBrierScore(testY, winChances):
     # Calculate the brier score
 
     numInstances = len(testY)
-
+    
     sum = 0
     for i in range(numInstances):
         addend = float(winChances[i] - testY[i]) ** 2
