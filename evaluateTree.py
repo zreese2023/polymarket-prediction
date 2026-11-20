@@ -18,13 +18,13 @@ def timeSplit(X, Y, startTimes, testFraction = 0.2):
 def getAccuracy(testY, winChances):
 
     # Count how many games were predicted right and divide by the number of games
-    gameNum = len(testY)
+    gameNum = len(testY) # expects/assumes list type
 
     correctNum = 0
     for i in range(gameNum):
         # prediction is considered correct if greater than 50%
         if testY[i] == 1 and winChances[i] > 0.5:
-            correctNum += 1 # increment counter of how many game were right
+            correctNum += 1
 
     return float(correctNum/gameNum)
 
@@ -50,8 +50,41 @@ def getCalibration(testY, winChances, binCount = 10):
     # Need to return a list of (average predicted chance, actual win rate, number of games) for each bin that has games
 
     # bins group games by their predicted chance
+    # ex. bin 1 is composed of 0 - 10% non-inclusive
+    
+    if winChances is None or testY is None:
+        return None
+    
+    bins = []
+    chanceTotals = [0] * binCount
+    winTotals = [0] * binCount
+    gameCounts = [0] * binCount
 
-    return []
+    for i in range(binCount):
+        ind = float((i+1)/binCount)
+        bins.append(ind)
+    
+    ind = np.digitize(winChances, bins)
+    
+    
+    for i in range(len(winChances)):
+        binNum = (ind[i] - 1)
+        
+        # compute (commutative operations only)
+        chanceTotals[binNum] += winChances[i]
+        if testY[i] == 1 and winChances[i] > 0.5:
+            winTotals[binNum] += 1
+        gameCounts[binNum] += 1
+    
+    for i in range(len(winChances)):
+        binNum = (ind[i] - 1)
+        
+        # divide
+        if chanceTotals[binNum] != 0:
+            chanceTotals[binNum] = chanceTotals[binNum] / gameCounts[binNum]
+        if winTotals[binNum] != 0:
+            winTotals[binNum] = winTotals[binNum] / gameCounts[binNum]
+    return [chanceTotals, winTotals, gameCounts]
 
 # Prints a tablet comparing every predictor on the same test games
 
