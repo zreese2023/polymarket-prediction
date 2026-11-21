@@ -28,8 +28,11 @@ def getAccuracy(testY, winChances):
 
     correctNum = 0
     for i in range(gameNum):
+
         # prediction is considered correct if greater than 50%
-        if testY[i] == 1 and winChances[i] > 0.5:
+        if winChances[i] >= 0.5 and testY[i] == 1:
+            correctNum += 1
+        elif winChances[i] < 0.5 and testY[i] == 0:
             correctNum += 1
 
     return float(correctNum/gameNum)
@@ -53,8 +56,6 @@ def getBrierScore(testY, winChances):
 
 def getCalibration(testY, winChances, binCount = 10):
 
-    # Need to return a list of (average predicted chance, actual win rate, number of games) for each bin that has games
-
     # bins group games by their predicted chance
     # ex. bin 1 is composed of 0 - 10% non-inclusive
     
@@ -62,6 +63,8 @@ def getCalibration(testY, winChances, binCount = 10):
         return None
     
     bins = []
+    calibrationRows = []
+
     chanceTotals = [0] * binCount
     winTotals = [0] * binCount
     gameCounts = [0] * binCount
@@ -74,23 +77,23 @@ def getCalibration(testY, winChances, binCount = 10):
     
     
     for i in range(len(winChances)):
-        binNum = (ind[i] - 1)
-        
+        binNum = min(ind[i], binCount - 1)
+
         # compute (commutative operations only)
         chanceTotals[binNum] += winChances[i]
-        if testY[i] == 1 and winChances[i] > 0.5:
-            winTotals[binNum] += 1
+        winTotals[binNum] += testY[i]
         gameCounts[binNum] += 1
     
-    for i in range(len(winChances)):
-        binNum = (ind[i] - 1)
-        
-        # divide
-        if chanceTotals[binNum] != 0:
-            chanceTotals[binNum] = chanceTotals[binNum] / gameCounts[binNum]
-        if winTotals[binNum] != 0:
-            winTotals[binNum] = winTotals[binNum] / gameCounts[binNum]
-    return [chanceTotals, winTotals, gameCounts]
+    for i in range(binCount):
+
+        if gameCounts[i] == 0:
+            continue
+
+        averageChance = float(chanceTotals[i] / gameCounts[i])
+        actualWinRate = float(winTotals[i] / gameCounts[i])
+        calibrationRows.append((averageChance, actualWinRate, gameCounts[i]))
+
+    return calibrationRows
 
 # Prints a tablet comparing every predictor on the same test games
 
