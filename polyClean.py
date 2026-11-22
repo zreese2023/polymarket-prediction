@@ -3,6 +3,7 @@
 import json
 from datetime import datetime, timezone
 from Polydata import getPriceHistory
+from requests import RequestException
 
 minVolume = 1000
 minPricePoints = 4
@@ -128,13 +129,42 @@ def cleanMarkets(rawMarkets, currSport, seenIds):
 
         # Need to skip markets with volume under minVolume, use i.get("volumeNum")
 
+        volume = i.get("volumeNum")
+        if volume is None or volume < minVolume:
+            droppedCount += 1
+            continue
+
         # Meed to get the first token id from parsePolyList(i.get("clobTokenIds"))
+
+        tokenIds = parsePolyList(i.get("clobTokenIds"))
+        if len(tokenIds) == 0:
+            droppedCount += 1
+            continue
+        tokenId = tokenIds[0]
 
         # Need to get the price history with getPriceHistory and skip if it has fewer than the minPricePoints points
 
+        try:
+            priceHistory = getPriceHistory(tokenId)
+        except (RequestException, RuntimeError):
+            droppedCount += 1
+            continue
+        
+        if len(priceHistory) < minPricePoints:
+            droppedCount += 1
+            continue
+
         # Need to build the record dictionary from the list and add it to finalCleanedRecords
 
-        pass
+        finalCleanedRecords.append({
+            "sport": currSport,
+            "id": i.get("id"),
+            "start": gameStart,
+            "outcome": marketOutcome,
+            "volume": float(volume),
+            "times": [point["t"] for point in priceHistory],
+            "prices": [point["p"] for point in priceHistory],
+        })
 
     print(f"{currSport}: kept {len(finalCleanedRecords)} of {len(rawMarkets)} markets")
 
