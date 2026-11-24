@@ -163,6 +163,8 @@ def cleanMarkets(rawMarkets, currSport, seenIds):
             "outcome": marketOutcome,
             "volume": float(volume),
             "times": [point["t"] for point in priceHistory],
+            "question": i.get("question"),
+            "outcomes": parsePolyList(i.get("outcomes")),
             "prices": [point["p"] for point in priceHistory],
         })
 

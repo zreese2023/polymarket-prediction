@@ -2,24 +2,15 @@
 
 import numpy as np
 
+from demo import demoGame
+from getTime import showBestBuy, showBestSell
 from Polydata import getSportsTags, getClosedMarketData
 from polyClean import cleanMarkets
 from polyFeatures import buildDataset
 from polyTree import DecisionTree
-from evaluateTree import timeSplit, compareResults, getCalibration
+from evaluateTree import timeSplit, compareResults
 
 wantedSports = ("nba", "nfl")
-
-def printCalibration(modelName, testY, winChances):
-
-    print(f"\nCalibration of the {modelName}")
-    print(f"{'Avg chance':>12}{'Win rate':>10}{'Games':>8}")
-
-    calibrationRows = getCalibration(testY, winChances)
-
-    for averageChance, actualWinRate, gameCount in calibrationRows:
-
-        print(f"{averageChance:>12.3f}{actualWinRate:>10.3f}{gameCount:>8}")
 
 def main():
 
@@ -47,7 +38,6 @@ def main():
     gameTree.fit(trainX, trainY)
 
     treePredictions = gameTree.predictProbability(testX)
-    marketPredictions = marketPrices[testRows]
 
     print()
     compareResults(testY, {
@@ -56,8 +46,11 @@ def main():
         "Always 50%": np.full(len(testY), 0.5),
     })
 
-    printCalibration("Decision tree", testY, treePredictions)
-    printCalibration("Market price", testY, marketPredictions)
+    print()
+    demoGame(gameTree, allRecords, testRows, testX, testY)
+
+    showBestBuy(allRecords, [48, 36, 24, 12, 6, 3])
+    showBestSell(allRecords, [48, 36, 24, 12, 6, 3])
     
 if __name__ == "__main__":
     main()
